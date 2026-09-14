@@ -11,12 +11,28 @@
 
 Все четыре скилла можно запускать из Codex и Claude Code. У Hermes провайдер модели в данном сценарии — только ChatGPT/Codex OAuth; Claude Code используется как агент, выполняющий раскатку.
 
+## Быстрая установка
+
+Каждая строка устанавливает весь набор из четырёх скиллов. После установки
+откройте новую сессию агента.
+
+**Codex:**
+
+```bash
+codex plugin marketplace add brenao777/superpowers-kit --ref main && codex plugin add superpowers-kit@superpowers-kit
+```
+
+**Claude Code:**
+
+```bash
+claude plugin marketplace add brenao777/superpowers-kit && claude plugin install superpowers-kit@superpowers-kit
+```
+
 ## Безопасность
 
 - Секреты не передаются в чат и не попадают в отчёты.
 - Любое внешнее изменение предваряется кратким объяснением.
 - Hermes не отключает парольный SSH-доступ, пока вход по ключу не проверен отдельно.
-- Перед публикацией репозитория выберите и добавьте лицензию.
 
 ## Структура
 
