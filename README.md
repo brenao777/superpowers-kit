@@ -7,6 +7,7 @@
 - `agent-dev-setup` — проверяет и поэтапно готовит окружение вокруг уже установленного Codex или Claude Code на macOS и Windows;
 - `obsidian-git-knowledge-base` — создаёт и ведёт Obsidian vault как Markdown-базу знаний с Git, GitHub, `AGENTS.md` и `CLAUDE.md`;
 - `hermes-vps-deploy` — разворачивает или обновляет Hermes на Ubuntu/Debian VPS, подключает Telegram и модель через ChatGPT/Codex OAuth.
+- `skill-audit` — выполняет эвристический статический аудит сторонних скиллов до установки и сравнивает проверенные версии со снапшотом.
 
 Все три скилла можно запускать из Codex и Claude Code. У Hermes провайдер модели в данном сценарии — только ChatGPT/Codex OAuth; Claude Code используется как агент, выполняющий раскатку.
 
