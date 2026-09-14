@@ -1,0 +1,3 @@
+interface:
+  display_name: "Obsidian + Git база знаний"
+  short_description: "Бережно настраивает и ведёт vault с Git"

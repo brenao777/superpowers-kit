@@ -1,0 +1,18 @@
+{
+  "name": "superpowers-kit",
+  "version": "0.1.0",
+  "description": "Universal skills for Codex and Claude Code: environment setup, Obsidian knowledge bases, and Hermes VPS deployment.",
+  "author": {
+    "name": "Superpowers Kit"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Superpowers Kit",
+    "shortDescription": "Universal skills for Codex and Claude Code.",
+    "longDescription": "A portable collection for agent environment setup, Obsidian knowledge bases, and secure Hermes deployment to a VPS.",
+    "developerName": "Superpowers Kit",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use the relevant Superpowers Kit skill for my task. Explain external side effects before taking them."
+  }
+}

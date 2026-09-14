@@ -1,0 +1,4 @@
+interface:
+  display_name: "Настройка окружения агента"
+  short_description: "Готовит окружение для Codex или Claude Code"
+  default_prompt: "Используй $agent-dev-setup, чтобы подготовить этот компьютер для Codex или Claude Code."

@@ -1,0 +1,14 @@
+{
+  "name": "superpowers-kit",
+  "owner": {
+    "name": "Superpowers Kit"
+  },
+  "plugins": [
+    {
+      "name": "superpowers-kit",
+      "source": "./plugins/superpowers-kit",
+      "description": "Universal setup, Obsidian, and Hermes VPS skills.",
+      "version": "0.1.0"
+    }
+  ]
+}

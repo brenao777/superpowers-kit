@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hermes на VPS"
+  short_description: "Разворачивает Hermes с Telegram через OAuth"
+  default_prompt: "Используй $hermes-vps-deploy, чтобы безопасно развернуть Hermes на Ubuntu/Debian VPS."
