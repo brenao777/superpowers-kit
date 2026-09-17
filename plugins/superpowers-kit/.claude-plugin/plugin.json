@@ -1,7 +1,7 @@
 {
   "name": "superpowers-kit",
-  "version": "0.1.0",
-  "description": "Universal environment setup, Obsidian, and Hermes VPS deployment skills.",
+  "version": "0.2.0",
+  "description": "Universal environment setup, Obsidian, Telegram via Telethon, and Hermes VPS deployment skills.",
   "author": {
     "name": "Superpowers Kit"
   }
