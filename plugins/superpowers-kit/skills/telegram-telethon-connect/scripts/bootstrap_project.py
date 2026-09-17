@@ -149,6 +149,82 @@ if __name__ == "__main__":
     args = parser.parse_args()
     asyncio.run(main(args.dialogs))
 ''',
+    "scripts/telegram_readonly.py": r'''"""Read selected Telegram data through a local session; never sends or edits messages."""
+
+import argparse
+import asyncio
+import os
+from pathlib import Path
+
+from telethon import TelegramClient
+
+ROOT = Path(__file__).resolve().parents[1]
+SESSION = ROOT / "telegram"
+
+
+def credentials() -> tuple[int, str]:
+    try:
+        return int(os.environ["TELEGRAM_API_ID"]), os.environ["TELEGRAM_API_HASH"]
+    except (KeyError, ValueError) as error:
+        raise SystemExit("Missing or invalid API credentials. Fill .env locally and load it in this terminal.") from error
+
+
+async def resolve_chat(client: TelegramClient, locator: str):
+    if locator.startswith("@") or locator.lstrip("-").isdigit():
+        return await client.get_entity(locator)
+    matches = []
+    async for dialog in client.iter_dialogs():
+        if dialog.name.casefold() == locator.casefold():
+            matches.append(dialog.entity)
+    if not matches:
+        raise SystemExit("Chat not found by exact name. Run `dialogs` first or use @username / numeric ID.")
+    if len(matches) > 1:
+        raise SystemExit("Several chats have this name. Use @username or numeric ID to disambiguate.")
+    return matches[0]
+
+
+def clean_text(text: str | None) -> str:
+    return " ".join((text or "").split())[:2000] or "[no text]"
+
+
+async def run(args: argparse.Namespace) -> None:
+    api_id, api_hash = credentials()
+    async with TelegramClient(str(SESSION), api_id, api_hash) as client:
+        if not await client.is_user_authorized():
+            raise SystemExit("No authorized local session found. Run a login script first.")
+        if args.command == "dialogs":
+            async for dialog in client.iter_dialogs(limit=args.limit):
+                print(dialog.name)
+            return
+
+        entity = await resolve_chat(client, args.chat)
+        if args.command == "recent":
+            messages = client.iter_messages(entity, limit=args.limit)
+        else:
+            messages = client.iter_messages(entity, search=args.query, limit=args.limit)
+        async for message in messages:
+            timestamp = message.date.astimezone().isoformat(timespec="minutes")
+            print(f"[{timestamp}] {clean_text(message.text)}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    dialogs = subparsers.add_parser("dialogs", help="List dialog names only")
+    dialogs.add_argument("--limit", type=int, default=20, choices=range(1, 101))
+    for name, help_text in (("recent", "Read recent messages"), ("search", "Search messages")):
+        command = subparsers.add_parser(name, help=help_text)
+        command.add_argument("--chat", required=True, help="Exact chat title, @username, or numeric ID")
+        command.add_argument("--limit", type=int, default=20, choices=range(1, 101))
+        if name == "search":
+            command.add_argument("--query", required=True)
+    args = parser.parse_args()
+    asyncio.run(run(args))
+
+
+if __name__ == "__main__":
+    main()
+''',
 }
 
 

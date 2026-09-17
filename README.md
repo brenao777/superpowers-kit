@@ -8,7 +8,7 @@
 - `agent-dev-setup` — готовит рабочее окружение для уже установленного Codex или Claude Code.
 - `obsidian-git-knowledge-base` — создаёт базу знаний в Obsidian с Git и GitHub.
 - `hermes-vps-deploy` — разворачивает личного Hermes-бота с Telegram на VPS.
-- `telegram-telethon-connect` — подключает личный Telegram через Telethon: QR или код, 2FA и безопасная read-only проверка.
+- `telegram-telethon-connect` — подключает личный Telegram через Telethon: QR или код, 2FA и узкий read-only CLI для поиска и чтения.
 
 Все пять скиллов можно запускать из Codex и Claude Code. У Hermes провайдер модели в данном сценарии — только ChatGPT/Codex OAuth; Claude Code используется как агент, выполняющий раскатку.
 
