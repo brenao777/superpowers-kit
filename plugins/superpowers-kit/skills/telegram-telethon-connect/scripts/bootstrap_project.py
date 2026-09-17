@@ -55,6 +55,38 @@ def credentials() -> tuple[int, str]:
         raise SystemExit("Missing or invalid TELEGRAM_API_HASH in the local .env file.")
     return api_id, api_hash
 ''',
+    "scripts/open_env_macos.py": r'''"""Create .env with private permissions and open it in macOS Terminal's nano editor."""
+
+import json
+import shlex
+import subprocess
+import sys
+
+from _config import ROOT
+
+
+def main() -> None:
+    if sys.platform != "darwin":
+        raise SystemExit("This launcher is only for macOS. Create .env from .env.example in your visible terminal.")
+    command = (
+        f"cd {shlex.quote(str(ROOT))} && "
+        "if [ -e .env ]; then "
+        "printf '%s\\n' '.env already exists; it was not changed.'; "
+        "else umask 077 && cp .env.example .env && chmod 600 .env; fi && "
+        "nano .env"
+    )
+    apple_script = (
+        'tell application "Terminal"\n'
+        "activate\n"
+        f"do script {json.dumps(command)}\n"
+        "end tell"
+    )
+    subprocess.run(["osascript", "-e", apple_script], check=True)
+
+
+if __name__ == "__main__":
+    main()
+''',
     "scripts/qr_login.py": r'''"""Authorize a local Telethon session using a QR code; never prints secrets."""
 
 import argparse
@@ -310,7 +342,7 @@ def main() -> None:
         destination.write_text(content, encoding="utf-8")
 
     print(f"Created local Telethon workspace: {target}")
-    print("Next: copy .env.example to .env and fill it yourself; do not share .env or telegram.session.")
+    print("Next on macOS: run python scripts/open_env_macos.py, fill .env yourself, and do not share it.")
 
 
 if __name__ == "__main__":
