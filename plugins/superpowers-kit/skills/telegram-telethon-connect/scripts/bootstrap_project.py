@@ -22,32 +22,72 @@ TELEGRAM_API_HASH=your_secret_api_hash
     "requirements.txt": """telethon>=1.45,<2
 qrcode[pil]>=8,<9
 """,
-    "scripts/qr_login.py": r'''"""Authorize a local Telethon session using a QR code; never prints secrets."""
+    "scripts/_config.py": r'''"""Load the two Telegram API credentials from process env or a local .env file."""
 
-import asyncio
-import getpass
 import os
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def credentials() -> tuple[int, str]:
+    values = {
+        "TELEGRAM_API_ID": os.environ.get("TELEGRAM_API_ID", ""),
+        "TELEGRAM_API_HASH": os.environ.get("TELEGRAM_API_HASH", ""),
+    }
+    env_path = ROOT / ".env"
+    if env_path.exists():
+        for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            if key in values and not values[key]:
+                values[key] = value.strip().strip('"').strip("'")
+
+    try:
+        api_id = int(values["TELEGRAM_API_ID"])
+    except ValueError as error:
+        raise SystemExit("Missing or invalid TELEGRAM_API_ID in the local .env file.") from error
+    api_hash = values["TELEGRAM_API_HASH"]
+    if not api_hash or api_hash == "your_secret_api_hash":
+        raise SystemExit("Missing or invalid TELEGRAM_API_HASH in the local .env file.")
+    return api_id, api_hash
+''',
+    "scripts/qr_login.py": r'''"""Authorize a local Telethon session using a QR code; never prints secrets."""
+
+import argparse
+import asyncio
+import getpass
+import subprocess
+import sys
 
 import qrcode
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 
-ROOT = Path(__file__).resolve().parents[1]
+from _config import ROOT, credentials
+
 SESSION = ROOT / "telegram"
 QR_IMAGE = ROOT / "tg_login_qr.png"
 
 
-def credentials() -> tuple[int, str]:
-    try:
-        return int(os.environ["TELEGRAM_API_ID"]), os.environ["TELEGRAM_API_HASH"]
-    except (KeyError, ValueError) as error:
-        raise SystemExit("Missing or invalid API credentials. Fill .env locally and load it in this terminal.") from error
+def focus_terminal() -> None:
+    if sys.platform == "darwin":
+        subprocess.run(
+            ["osascript", "-e", 'tell application "Terminal" to activate'],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
 
-async def main() -> None:
+async def main(focus_on_2fa: bool) -> None:
     api_id, api_hash = credentials()
-    async with TelegramClient(str(SESSION), api_id, api_hash) as client:
+    client = TelegramClient(str(SESSION), api_id, api_hash)
+    await client.connect()
+    try:
         if await client.is_user_authorized():
             print("A local Telegram session already exists. Nothing was changed.")
             return
@@ -55,42 +95,74 @@ async def main() -> None:
         qrcode.make(login.url).save(QR_IMAGE)
         print("Open tg_login_qr.png and scan it in Telegram: Settings → Devices → Link Desktop Device.")
         try:
-            await login.wait(timeout=120)
+            await login.wait()
         except SessionPasswordNeededError:
+            if focus_on_2fa:
+                focus_terminal()
             password = getpass.getpass("Telegram 2FA password (local input): ")
             await client.sign_in(password=password)
         except TimeoutError as error:
             raise SystemExit("QR expired. Run this script again for a fresh QR.") from error
         print("Authorization succeeded. telegram.session stays local; do not copy or commit it.")
+    finally:
+        await client.disconnect()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--focus-terminal-on-2fa", action="store_true")
+    args = parser.parse_args()
+    asyncio.run(main(args.focus_terminal_on_2fa))
+''',
+    "scripts/launch_qr_login_macos.py": r'''"""Launch QR login in a user-visible macOS Terminal for secure 2FA input."""
+
+import json
+import shlex
+import subprocess
+import sys
+
+from _config import ROOT
+
+
+def main() -> None:
+    if sys.platform != "darwin":
+        raise SystemExit("This launcher is only for macOS. Run qr_login.py in your visible terminal.")
+    python = ROOT / ".venv" / "bin" / "python"
+    login_script = ROOT / "scripts" / "qr_login.py"
+    command = (
+        f"cd {shlex.quote(str(ROOT))} && "
+        f"exec {shlex.quote(str(python))} {shlex.quote(str(login_script))} --focus-terminal-on-2fa"
+    )
+    apple_script = (
+        'tell application "Terminal"\n'
+        "activate\n"
+        f"do script {json.dumps(command)}\n"
+        "end tell"
+    )
+    subprocess.run(["osascript", "-e", apple_script], check=True)
+
+
+if __name__ == "__main__":
+    main()
 ''',
     "scripts/code_login.py": r'''"""Authorize a local Telethon session using Telegram's selected code-delivery path."""
 
 import asyncio
 import getpass
-import os
-from pathlib import Path
 
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 
-ROOT = Path(__file__).resolve().parents[1]
+from _config import ROOT, credentials
+
 SESSION = ROOT / "telegram"
-
-
-def credentials() -> tuple[int, str]:
-    try:
-        return int(os.environ["TELEGRAM_API_ID"]), os.environ["TELEGRAM_API_HASH"]
-    except (KeyError, ValueError) as error:
-        raise SystemExit("Missing or invalid API credentials. Fill .env locally and load it in this terminal.") from error
 
 
 async def main() -> None:
     api_id, api_hash = credentials()
-    async with TelegramClient(str(SESSION), api_id, api_hash) as client:
+    client = TelegramClient(str(SESSION), api_id, api_hash)
+    await client.connect()
+    try:
         if await client.is_user_authorized():
             print("A local Telegram session already exists. Nothing was changed.")
             return
@@ -105,6 +177,8 @@ async def main() -> None:
             password = getpass.getpass("Telegram 2FA password (local input): ")
             await client.sign_in(password=password)
         print("Authorization succeeded. telegram.session stays local; do not copy or commit it.")
+    finally:
+        await client.disconnect()
 
 
 if __name__ == "__main__":
@@ -114,25 +188,19 @@ if __name__ == "__main__":
 
 import argparse
 import asyncio
-import os
-from pathlib import Path
 
 from telethon import TelegramClient
 
-ROOT = Path(__file__).resolve().parents[1]
+from _config import ROOT, credentials
+
 SESSION = ROOT / "telegram"
-
-
-def credentials() -> tuple[int, str]:
-    try:
-        return int(os.environ["TELEGRAM_API_ID"]), os.environ["TELEGRAM_API_HASH"]
-    except (KeyError, ValueError) as error:
-        raise SystemExit("Missing or invalid API credentials. Fill .env locally and load it in this terminal.") from error
 
 
 async def main(show_dialogs: bool) -> None:
     api_id, api_hash = credentials()
-    async with TelegramClient(str(SESSION), api_id, api_hash) as client:
+    client = TelegramClient(str(SESSION), api_id, api_hash)
+    await client.connect()
+    try:
         if not await client.is_user_authorized():
             raise SystemExit("No authorized local session found. Run a login script first.")
         me = await client.get_me()
@@ -141,6 +209,8 @@ async def main(show_dialogs: bool) -> None:
             print("Recent dialog names (read-only):")
             async for dialog in client.iter_dialogs(limit=5):
                 print(f"- {dialog.name}")
+    finally:
+        await client.disconnect()
 
 
 if __name__ == "__main__":
@@ -153,20 +223,12 @@ if __name__ == "__main__":
 
 import argparse
 import asyncio
-import os
-from pathlib import Path
 
 from telethon import TelegramClient
 
-ROOT = Path(__file__).resolve().parents[1]
+from _config import ROOT, credentials
+
 SESSION = ROOT / "telegram"
-
-
-def credentials() -> tuple[int, str]:
-    try:
-        return int(os.environ["TELEGRAM_API_ID"]), os.environ["TELEGRAM_API_HASH"]
-    except (KeyError, ValueError) as error:
-        raise SystemExit("Missing or invalid API credentials. Fill .env locally and load it in this terminal.") from error
 
 
 async def resolve_chat(client: TelegramClient, locator: str):
@@ -189,7 +251,9 @@ def clean_text(text: str | None) -> str:
 
 async def run(args: argparse.Namespace) -> None:
     api_id, api_hash = credentials()
-    async with TelegramClient(str(SESSION), api_id, api_hash) as client:
+    client = TelegramClient(str(SESSION), api_id, api_hash)
+    await client.connect()
+    try:
         if not await client.is_user_authorized():
             raise SystemExit("No authorized local session found. Run a login script first.")
         if args.command == "dialogs":
@@ -205,6 +269,8 @@ async def run(args: argparse.Namespace) -> None:
         async for message in messages:
             timestamp = message.date.astimezone().isoformat(timespec="minutes")
             print(f"[{timestamp}] {clean_text(message.text)}")
+    finally:
+        await client.disconnect()
 
 
 def main() -> None:

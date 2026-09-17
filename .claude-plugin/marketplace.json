@@ -8,7 +8,7 @@
       "name": "superpowers-kit",
       "source": "./plugins/superpowers-kit",
       "description": "Universal setup, Obsidian, Telegram via Telethon, and Hermes VPS skills.",
-      "version": "0.2.0"
+      "version": "0.2.1"
     }
   ]
 }
