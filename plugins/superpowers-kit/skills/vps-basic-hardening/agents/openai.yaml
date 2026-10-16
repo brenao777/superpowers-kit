@@ -1,0 +1,4 @@
+interface:
+  display_name: "Базовая защита VPS"
+  short_description: "Настраивает UFW, Fail2ban и безопасный вход по SSH"
+  default_prompt: "Используй $vps-basic-hardening, чтобы настроить базовую защиту моего Ubuntu/Debian VPS и проверить SSH-доступ."

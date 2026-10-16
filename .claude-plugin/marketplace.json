@@ -7,8 +7,8 @@
     {
       "name": "superpowers-kit",
       "source": "./plugins/superpowers-kit",
-      "description": "Universal setup, Obsidian, Telegram via Telethon, and Hermes VPS skills.",
-      "version": "0.2.1"
+      "description": "Skills for Codex and Claude Code: environment setup, Obsidian, Telegram, Hermes deployment, and VPS hardening.",
+      "version": "0.2.2"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "name": "superpowers-kit",
-  "version": "0.2.1",
-  "description": "Universal skills for Codex and Claude Code: environment setup, Obsidian knowledge bases, Telegram via Telethon, and Hermes VPS deployment.",
+  "version": "0.2.2",
+  "description": "Skills for Codex and Claude Code: environment setup, Obsidian, Telegram, Hermes deployment, and VPS hardening.",
   "author": {
     "name": "Superpowers Kit"
   },
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "Superpowers Kit",
     "shortDescription": "Universal skills for Codex and Claude Code.",
-    "longDescription": "A portable collection for agent environment setup, Obsidian knowledge bases, Telegram via Telethon, and secure Hermes deployment to a VPS.",
+    "longDescription": "A portable collection for agent environment setup, Obsidian knowledge bases, Telegram via Telethon, Hermes deployment, and standalone VPS hardening.",
     "developerName": "Superpowers Kit",
     "category": "Productivity",
     "capabilities": [],
